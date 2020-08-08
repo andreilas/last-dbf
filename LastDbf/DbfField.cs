@@ -17,5 +17,11 @@
             Length = length;
             Precision = precision;
         }
+
+        public override bool Equals(object obj) => obj is DbfField f && f.Name == Name && f.Type == Type && f.Length == Length && f.Precision == Precision;
+
+        public override int GetHashCode() => unchecked(Name.GetHashCode() + Type.GetHashCode() + Length.GetHashCode() + Precision.GetHashCode());
+
+        public override string ToString() => $"{Type}({Length}, {Precision}) {Name}";
     }
 }
