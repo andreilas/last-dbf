@@ -23,7 +23,7 @@ namespace LastDbf
         {
             _readStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 
-            var header = (DbfHeaderStruct)_readStream.ReadValue(typeof(DbfHeaderStruct));
+            var header = (Header)_readStream.ReadValue(typeof(Header));
             Version = (DbfVersion)header.Version;
             RecordCount = (int)header.RecordCount;
             _dataOffset = header.HeaderBytes;
@@ -39,7 +39,7 @@ namespace LastDbf
                     if (_readStream.ReadByte() == 0x0d) break;
                     _readStream.Position = position;
 
-                    var f = (DbfFieldHeaderStruct)_readStream.ReadValue(typeof(DbfFieldHeaderStruct));
+                    var f = (FieldDescriptor)_readStream.ReadValue(typeof(FieldDescriptor));
 
                     yield return new DbfField(f.FieldName, (DbfFieldType)f.FieldType, f.FieldLength, f.DecimalCount);
                 }

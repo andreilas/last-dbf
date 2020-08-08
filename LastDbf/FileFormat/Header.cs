@@ -7,7 +7,7 @@ namespace LastDbf
     [StructLayout(LayoutKind.Explicit)]
     [SuppressMessage("ReSharper", "BuiltInTypeReferenceStyle")]
     [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local")]
-    internal struct DbfHeaderStruct
+    internal struct Header
     {
         [FieldOffset(0x00)] public byte Version;
 
@@ -39,7 +39,7 @@ Offset	Size	Type	Sample value	Description
 …	1	byte	0x0d	Field terminator
          */
 
-        public static int SizeOf => Marshal.SizeOf(typeof(DbfHeaderStruct));
+        public static int SizeOf => Marshal.SizeOf(typeof(Header));
 
         public DateTime LastUpdateDate
         {

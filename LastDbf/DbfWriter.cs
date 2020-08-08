@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -67,8 +68,13 @@ namespace LastDbf
 
                 case DbfFieldType.Float:
                     {
-                        var s = value.ToString().Replace(",", ".");
-                        return ToBytes(s, 10);
+                        var d = (decimal)Convert.ChangeType(value, typeof(decimal));
+                        var s = d.ToString("F" + field.Precision, CultureInfo.InvariantCulture.NumberFormat);
+                        if( s.Length > field.Length) throw  new InvalidCastException(field.Name);
+
+                        s = new string(' ', field.Length - s.Length);
+
+                        return ToBytes(s, field.Length);
                     }
 
                 case DbfFieldType.Logical:
@@ -118,7 +124,6 @@ namespace LastDbf
             if (_writingMode)
                 WriteHeader(); // write again to save record count etc.
 
-            _writeStream.WriteByte(0xA1); // eof
             _writeStream.Flush();
             _writeStream.Dispose();
         }
@@ -134,11 +139,11 @@ namespace LastDbf
 
         private void WriteHeader()
         {
-            var h = new DbfHeaderStruct
+            var h = new Header
             {
                 Version = (byte)Version,
                 RecordCount = (uint)RecordCount,
-                HeaderBytes = (ushort)(DbfHeaderStruct.SizeOf + _fields.Count * DbfHeaderStruct.SizeOf + 1), // + 1 - end of header make (0x0D)
+                HeaderBytes = (ushort)(Header.SizeOf + _fields.Count * FieldDescriptor.SizeOf + 1), // + 1 - end of header make (0x0D)
                 RecordBytes = (ushort)CurrentRecordSize(),
                 LastUpdateDate = DateTime.Today
             };
@@ -146,17 +151,18 @@ namespace LastDbf
             _writeStream.Position = 0;
 
             _writeStream.WriteValue(h);
+            _writeStream.Flush();
         }
 
         private int CurrentRecordSize() => _fields.Sum(x => x.Size) + 1; // + 1 -  deleted mark
 
         private void WriteFields()
         {
-            _writeStream.Position = DbfHeaderStruct.SizeOf;
+            _writeStream.Position = Header.SizeOf;
 
             foreach (var field in _fields)
             {
-                var f = new DbfFieldHeaderStruct
+                var f = new FieldDescriptor
                 {
                     FieldName = field.Name,
                     FieldType = (byte)field.Type,
@@ -166,6 +172,7 @@ namespace LastDbf
                 };
 
                 _writeStream.WriteValue(f);
+                _writeStream.Flush();
             }
 
             _writeStream.WriteByte(0x0d); // The End of Fields mark

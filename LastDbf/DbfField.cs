@@ -18,6 +18,13 @@ namespace LastDbf
             Type = type;
             Length = length;
             Precision = precision;
+
+            switch (type)
+            {
+                case DbfFieldType.Float: 
+                    if (length == 0) Length = 10; 
+                    break;
+            }
         }
 
         public int Size

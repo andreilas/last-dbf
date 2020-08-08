@@ -8,7 +8,7 @@ namespace LastDbf
     [StructLayout(LayoutKind.Explicit)]
     [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local")]
     [SuppressMessage("ReSharper", "BuiltInTypeReferenceStyle")]
-    internal struct DbfFieldHeaderStruct
+    internal struct FieldDescriptor
     {
         /*
     Offset	Size	Type	Sample value	Description
@@ -52,7 +52,7 @@ namespace LastDbf
         [FieldOffset(0x18)] private byte Reserved;
         [FieldOffset(0x18 + 8 - 1)] private byte LastByte;
 
-        public static int SizeOf => Marshal.SizeOf(typeof(DbfFieldHeaderStruct));
+        public static int SizeOf => Marshal.SizeOf(typeof(FieldDescriptor));
 
         public string FieldName
         {
