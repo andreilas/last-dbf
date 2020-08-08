@@ -7,6 +7,19 @@ namespace LastDbf.Test
     public class ComplexUnitTest
     {
         [TestMethod]
+        public void TestHeader()
+        {
+            var path = @"C:\TEMP\DB_HEADER.DBF";
+
+            using var dbf = new DbfBase();
+
+            dbf.Create(path, DbfVersion.dBASE_III);
+
+            dbf.AddField(new DbfField("CHRFIELD", DbfFieldType.Character, 10));
+            //dbf.AddRecord("ANDREI");
+        }
+
+        [TestMethod]
         public void TestMethod1()
         {
             var path = @"C:\TEMP\DB.DBF";
@@ -21,7 +34,7 @@ namespace LastDbf.Test
 
                 dbf.Create(path, DbfVersion.dBASE_IV_SQL_Table);
 
-                dbf.AddField(new DbfField("INTFIELD", DbfFieldType.Integer));
+                //dbf.AddField(new DbfField("INTFIELD", DbfFieldType.Integer));
                 dbf.AddField(new DbfField("LGCFIELD", DbfFieldType.Logical));
                 dbf.AddField(new DbfField("DATFIELD", DbfFieldType.Date));
 

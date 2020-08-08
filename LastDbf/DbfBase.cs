@@ -132,7 +132,13 @@ namespace LastDbf
 
         public void Dispose()
         {
-            //WriteHeader(Records.Count);
+            if (_mode == Mode.OpenWrite)
+            {
+                WriteHeader(0);
+                WriteFields();
+            }
+            else
+                WriteHeader(0);
 
             _writeStream?.Dispose();
             _mode = Mode.Disposed;

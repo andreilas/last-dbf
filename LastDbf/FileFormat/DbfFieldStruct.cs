@@ -10,6 +10,19 @@ namespace LastDbf
     [SuppressMessage("ReSharper", "BuiltInTypeReferenceStyle")]
     internal struct DbfFieldStruct
     {
+        /*
+    Offset	Size	Type	Sample value	Description
+    0x00	11	string	PRODID 	Field name (padded with NULL-bytes)
+    0x0b	1	char	C	Field type
+    0x0c	4	uint32	 	Field data address in memory
+    0x10	1	byte	10	Field length
+    0x11	1	byte	4	Field decimal count
+    0x12	2	 	 	Reserved for dBASE IIIPlus/LAN
+    0x14	1	byte	 	Work area ID
+    0x15	2	 	 	Reserved for dBASE IIIPlus/LAN
+    0x17	1	byte	 	SET FIELDS flag
+    0x18	8	 	 	Reserved
+         */
         [FieldOffset(0x00)] private byte NameByte0;
         [FieldOffset(0x01)] private byte NameByte1;
         [FieldOffset(0x02)] private byte NameByte2;
@@ -88,18 +101,4 @@ namespace LastDbf
             }
         }
     }
-
-    /*
-Offset	Size	Type	Sample value	Description
-0x00	11	string	PRODID 	Field name (padded with NULL-bytes)
-0x0b	1	char	C	Field type
-0x0c	4	uint32	 	Field data address in memory
-0x10	1	byte	10	Field length
-0x11	1	byte	4	Field decimal count
-0x12	2	 	 	Reserved for dBASE IIIPlus/LAN
-0x14	1	byte	 	Work area ID
-0x15	2	 	 	Reserved for dBASE IIIPlus/LAN
-0x17	1	byte	 	SET FIELDS flag
-0x18	8	 	 	Reserved
-     */
 }
