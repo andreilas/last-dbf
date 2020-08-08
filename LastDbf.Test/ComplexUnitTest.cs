@@ -24,22 +24,54 @@ namespace LastDbf.Test
         [TestMethod]
         public void TestReadSample()
         {
-            var path = Folder + @"SAMPLE.dbf";
+            var sample = Folder + @"SAMPLE.dbf";
+            var sample2 = Folder + @"SAMPLE2.dbf";
 
-            using var reader = new DbfReader(path);
+            IReadOnlyList<DbfField> fields;
+            List<object[]> records;
 
-            Assert.AreEqual(4, (int)reader.Version);
-
-            Assert.AreEqual(5, reader.Fields.Count);
-
-            Assert.AreEqual(2,reader.RecordCount);
-
-            foreach (var record in reader.Records())
+            // Read Sample
             {
-                
+                using var reader = new DbfReader(sample);
+
+                Assert.AreEqual(4, (int)reader.Version);
+                Assert.AreEqual(5, reader.Fields.Count);
+
+                fields = reader.Fields;
+                Assert.IsNotNull(fields);
+
+                records = reader.Records()?.ToList();
+                Assert.IsNotNull(records);
             }
 
-            //dbf.AddRecord("ANDREI");
+            // Write new
+            {
+                using var writer = new DbfWriter(sample2, DbfVersion.dBASE_IV);
+
+                foreach (var f in fields)
+                    writer.AddField(new DbfField(f.Name, f.Type, f.Length, f.Precision));
+
+                Assert.AreEqual(fields.Count, writer.Fields.Count);
+
+                foreach (var record in records)
+                    writer.AddRecord(record);
+
+                Assert.AreEqual(records.Count, writer.RecordCount);
+            }
+
+            // Read new 
+            {
+                using var reader = new DbfReader(sample2);
+
+                Assert.AreEqual(4, (int)reader.Version);
+                Assert.AreEqual(5, reader.Fields.Count);
+                Assert.AreEqual(records.Count, reader.RecordCount);
+
+                var records2 = reader.Records()?.ToList();
+                Assert.IsNotNull(records2);
+                Assert.AreEqual(records.Count, records2.Count);
+                CollectionAssert.AreEqual(records, records2);
+            }
         }
 
 

@@ -36,20 +36,19 @@ namespace LastDbf
 
             if (!_writingMode) StartWriting();
 
-
             _writeStream.Position = DbfHeaderStruct.SizeOf + DbfFieldHeaderStruct.SizeOf * _fields.Count + 1;
 
             var i = 0;
             foreach (var value in values)
             {
-                var bytes = GetBytes(_fields[i++], value);
-                foreach (var b in bytes) _writeStream.WriteByte(b);
+                var bytes = PackValues(_fields[i++], value).ToArray();
+                _writeStream.Write(bytes, 0, bytes.Length);
             }
 
             ++RecordCount;
         }
 
-        private static IEnumerable<byte> GetBytes(DbfField field, object value)
+        private static IEnumerable<byte> PackValues(DbfField field, object value)
         {
             switch (field.Type)
             {
@@ -110,13 +109,9 @@ namespace LastDbf
 
         public override void Dispose()
         {
-            if (!_writingMode)
-            {
-                WriteHeader(RecordCount);
-                WriteFields();
-            }
-            else
-                WriteHeader(0);
+            WriteHeader(RecordCount);
+
+            if (!_writingMode) WriteFields();
 
             _writeStream?.Dispose();
         }
@@ -143,7 +138,7 @@ namespace LastDbf
 
             _writeStream.Position = 0;
 
-            _writeStream.Write(h);
+            _writeStream.WriteValue(h);
         }
 
         private void WriteFields()
@@ -161,7 +156,7 @@ namespace LastDbf
                     Displacement = (uint)field.Displacement
                 };
 
-                _writeStream.Write(f);
+                _writeStream.WriteValue(f);
             }
 
             _writeStream.WriteByte(0x0d); // The End of Fields mark

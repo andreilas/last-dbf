@@ -6,7 +6,7 @@ namespace LastDbf
 {
     internal static class Helper
     {
-        public static object Read(this Stream stream, Type t)
+        public static object ReadValue(this Stream stream, Type t)
         {
             var buffer = new byte[Marshal.SizeOf(t)];
             for (var read = 0; read < buffer.Length; read += stream.Read(buffer, read, buffer.Length)) { }
@@ -21,7 +21,7 @@ namespace LastDbf
             }
         }
 
-        public static void Write(this Stream stream, object o)
+        public static void WriteValue(this Stream stream, object o)
         {
             var buffer = new byte[Marshal.SizeOf(o.GetType())];
             var gcHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);

@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace LastDbf
@@ -24,7 +23,7 @@ namespace LastDbf
         {
             _readStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 
-            var header = (DbfHeaderStruct)_readStream.Read(typeof(DbfHeaderStruct));
+            var header = (DbfHeaderStruct)_readStream.ReadValue(typeof(DbfHeaderStruct));
             Version = (DbfVersion)header.Version;
             RecordCount = (int)header.RecordCount;
             _dataOffset = header.HeaderBytes;
@@ -40,7 +39,7 @@ namespace LastDbf
                     if (_readStream.ReadByte() == 0x0d) break;
                     _readStream.Position = position;
 
-                    var f = (DbfFieldHeaderStruct)_readStream.Read(typeof(DbfFieldHeaderStruct));
+                    var f = (DbfFieldHeaderStruct)_readStream.ReadValue(typeof(DbfFieldHeaderStruct));
 
                     yield return new DbfField(f.FieldName, (DbfFieldType)f.FieldType, f.FieldLength, f.DecimalCount);
                 }
@@ -69,17 +68,17 @@ namespace LastDbf
                 ++_recordIndex;
 
                 if (!skipDeleted || bytes[0] == ' ') break;
-            } 
-            
-            return UnpackRecord(bytes).ToArray();
+            }
+
+            return UnpackRecord(bytes, skipDeleted).ToArray();
         }
 
-        private IEnumerable<object> UnpackRecord(byte[] bytes)
+        private IEnumerable<object> UnpackRecord(byte[] bytes, bool skipDeleted)
         {
             var reader = new BinaryReader(new MemoryStream(bytes));
 
             var deleted = reader.ReadChar();
-            yield return deleted != ' ';
+            if (!skipDeleted) yield return deleted != ' ';
 
             foreach (var field in Fields)
             {
@@ -98,9 +97,7 @@ namespace LastDbf
                             var match = Regex.Match(v, @"^(\d\d\d\d)(\d\d)(\d\d)$");
                             if (!match.Success) throw new InvalidDataException($"{field}: '{v}'");
 
-                            var g = match.Groups;
-                            var date = new DateTime(ParseGroup(1), ParseGroup(2), ParseGroup(3));
-                            yield return date;
+                            yield return new DateTime(ParseGroup(1), ParseGroup(2), ParseGroup(3));
                             break;
 
                             int ParseGroup(int n) => int.Parse(match.Groups[n].Value);
