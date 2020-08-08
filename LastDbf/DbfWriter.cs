@@ -26,29 +26,26 @@ namespace LastDbf
 
         public void AddField(DbfField field)
         {
-            field.Displacement = _fields.Sum(x => x.Size);
+            field.Displacement = CurrentRecordSize();
             _fields.Add(field);
         }
 
         public void AddRecord(params object[] values)
         {
-            //EnsureModeIsCorrect(Mode.OpenWrite, Mode.Writing);
+            if (values.Length != _fields.Count) throw new ArgumentException("Invalid number of items");
 
             if (!_writingMode) StartWriting();
 
-            _writeStream.Position = DbfHeaderStruct.SizeOf + DbfFieldHeaderStruct.SizeOf * _fields.Count + 1;
+            //_writeStream.Position = DbfHeaderStruct.SizeOf + DbfFieldHeaderStruct.SizeOf * _fields.Count + 1;
 
-            var i = 0;
-            foreach (var value in values)
-            {
-                var bytes = PackValues(_fields[i++], value).ToArray();
-                _writeStream.Write(bytes, 0, bytes.Length);
-            }
+            _writeStream.WriteValue(' '); // Not deleted mark
+            var bytes = _fields.Zip(values, PackValue).SelectMany(x => x).ToArray();
+            _writeStream.Write(bytes, 0, bytes.Length);
 
             ++RecordCount;
         }
 
-        private static IEnumerable<byte> PackValues(DbfField field, object value)
+        private static IEnumerable<byte> PackValue(DbfField field, object value)
         {
             switch (field.Type)
             {
@@ -61,7 +58,12 @@ namespace LastDbf
                     }
 
                 case DbfFieldType.Date:
-                    return Encoding.Default.GetBytes($"{value:YYYYMMdd}");
+                    {
+                        var d = (DateTime)value;
+                        var s = $"{d.Year:0000}{d.Month:00}{d.Day:00}";
+                        var bytes = Encoding.Default.GetBytes(s);
+                        return bytes;
+                    }
 
                 case DbfFieldType.Float:
                     {
@@ -101,19 +103,24 @@ namespace LastDbf
 
         private void StartWriting()
         {
-            WriteHeader(0);
+            WriteHeader();
             WriteFields();
             _writingMode = true;
         }
 
-
         public override void Dispose()
         {
-            WriteHeader(RecordCount);
+            if (!_writingMode)
+                StartWriting(); // write header & fields. no data
 
-            if (!_writingMode) WriteFields();
+            _writeStream.WriteByte(0x1A); // write eof
 
-            _writeStream?.Dispose();
+            if (_writingMode)
+                WriteHeader(); // write again to save record count etc.
+
+            _writeStream.WriteByte(0xA1); // eof
+            _writeStream.Flush();
+            _writeStream.Dispose();
         }
 
         //private enum Mode
@@ -125,14 +132,14 @@ namespace LastDbf
         //    Disposed
         //}
 
-        private void WriteHeader(int recordCount)
+        private void WriteHeader()
         {
             var h = new DbfHeaderStruct
             {
                 Version = (byte)Version,
-                RecordCount = (uint)recordCount,
-                HeaderBytes = (ushort)(DbfHeaderStruct.SizeOf + recordCount * DbfHeaderStruct.SizeOf),
-                RecordBytes = (ushort)_fields.Sum(x => x.Size),
+                RecordCount = (uint)RecordCount,
+                HeaderBytes = (ushort)(DbfHeaderStruct.SizeOf + _fields.Count * DbfHeaderStruct.SizeOf + 1), // + 1 - end of header make (0x0D)
+                RecordBytes = (ushort)CurrentRecordSize(),
                 LastUpdateDate = DateTime.Today
             };
 
@@ -140,6 +147,8 @@ namespace LastDbf
 
             _writeStream.WriteValue(h);
         }
+
+        private int CurrentRecordSize() => _fields.Sum(x => x.Size) + 1; // + 1 -  deleted mark
 
         private void WriteFields()
         {
@@ -161,11 +170,5 @@ namespace LastDbf
 
             _writeStream.WriteByte(0x0d); // The End of Fields mark
         }
-
-
-        //private void EnsureModeIsCorrect(params Mode[] modes)
-        //{
-        //    if (!modes.Contains(_mode)) throw new InvalidOperationException($"{_mode}");
-        //}
     }
 }

@@ -43,10 +43,10 @@ Offset	Size	Type	Sample value	Description
 
         public DateTime LastUpdateDate
         {
-            get => new DateTime(YY < 55 ? YY + 2000 : YY + 1900, MM, DD);
+            get => new DateTime(YY + 1900, MM, DD);
             set
             {
-                YY = (byte)(value.Year - value.Year / 100 * 100);
+                YY = (byte)(value.Year - 1900);
                 MM = (byte)value.Month;
                 DD = (byte)value.Day;
             }
