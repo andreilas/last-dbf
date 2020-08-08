@@ -5,7 +5,7 @@
         Character = (byte)'C',
         Date = (byte)'D',
         Float = (byte)'F',
-        Numeric = (byte)'C',
+        Numeric = (byte)'N',
         Logical = (byte)'Y',
 
         Integer = (byte)'I',

@@ -12,12 +12,12 @@ namespace LastDbf.Test
             var path = @"C:\TEMP\DB.DBF";
 
             var w0 = new object[] {123, true, DateTime.Today, "HELLO!!!", 20001000.34, 345.780};
-            var w1 = new object[] { 456, false, DateTime.Today.AddDays(-51), "BYE!!!", 10002000.34, 780.345};
+            var w1 = new object[] {456, false, DateTime.Today.AddDays(-51), "BYE!!!", 10002000.34, 780.345};
 
-            using var dbf = new DbfBase();
+            //using var dbf = new DbfBase();
 
             {
-                //using var dbf = new DbfBase();
+                using var dbf = new DbfBase();
 
                 dbf.Create(path, DbfVersion.dBASE_IV_SQL_Table);
 
@@ -37,7 +37,7 @@ namespace LastDbf.Test
             }
 
             {
-                //using var dbf = new DbfBase();
+                using var dbf = new DbfBase();
 
                 dbf.Open(path);
 
