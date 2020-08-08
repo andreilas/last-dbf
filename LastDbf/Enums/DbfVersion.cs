@@ -6,6 +6,7 @@ namespace LastDbf
     public enum DbfVersion
     {
         dBASE_III = 0x03,
+        dBASE_IV = 0x04,
         dBASE_IV_SQL_Table = 0x43
 
         /*

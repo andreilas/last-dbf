@@ -47,22 +47,30 @@ namespace LastDbf
             }
         }
 
-        public object[] Read()
+        public object[] Read(bool skipDeleted = true)
         {
             if (_recordIndex >= RecordCount) return null;
 
             var bytes = new byte[_recordSize];
-            _readStream.Position = _dataOffset + _recordIndex * _recordSize;
-            var read = _readStream.Read(bytes, 0, _recordSize);
 
-            if (read < _recordSize)
+            while (true)
             {
-                _recordIndex = RecordCount;
-                return null;
-            }
+                if (_recordIndex >= RecordCount) return null;
 
-            ++_recordIndex;
+                _readStream.Position = _dataOffset + _recordIndex * _recordSize;
+                var read = _readStream.Read(bytes, 0, _recordSize);
 
+                if (read < _recordSize)
+                {
+                    _recordIndex = RecordCount;
+                    return null;
+                }
+
+                ++_recordIndex;
+
+                if (!skipDeleted || bytes[0] == ' ') break;
+            } 
+            
             return UnpackRecord(bytes).ToArray();
         }
 
@@ -101,7 +109,7 @@ namespace LastDbf
                     case DbfFieldType.Numeric:
                         {
                             var v = ReadString(10).Trim();
-                            yield return decimal.Parse(v);
+                            yield return decimal.Parse(v, CultureInfo.InvariantCulture.NumberFormat);
                             break;
                         }
                     case DbfFieldType.Float:
@@ -113,7 +121,7 @@ namespace LastDbf
                     case DbfFieldType.Logical:
                         {
                             var y = char.ToLower((char)reader.ReadByte());
-                            yield return y == 'y' || y == 'f';
+                            yield return y == 'y' || y == 't';
                             break;
                         }
                     case DbfFieldType.Integer:
@@ -131,5 +139,7 @@ namespace LastDbf
         {
             _readStream.Dispose();
         }
+
+        public void Reset() => _recordIndex = 0;
     }
 }

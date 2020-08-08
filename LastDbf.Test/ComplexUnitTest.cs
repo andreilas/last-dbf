@@ -33,8 +33,12 @@ namespace LastDbf.Test
             Assert.AreEqual(5, reader.Fields.Count);
 
             Assert.AreEqual(2,reader.RecordCount);
-            
-            var record = reader.Read();
+
+            foreach (var record in reader.Records())
+            {
+                
+            }
+
             //dbf.AddRecord("ANDREI");
         }
 
