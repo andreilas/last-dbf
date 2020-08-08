@@ -8,7 +8,7 @@ namespace LastDbf
     [StructLayout(LayoutKind.Explicit)]
     [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local")]
     [SuppressMessage("ReSharper", "BuiltInTypeReferenceStyle")]
-    internal struct DbfFieldStruct
+    internal struct DbfFieldHeaderStruct
     {
         /*
     Offset	Size	Type	Sample value	Description
@@ -33,10 +33,11 @@ namespace LastDbf
         [FieldOffset(0x07)] private byte NameByte7;
         [FieldOffset(0x08)] private byte NameByte8;
         [FieldOffset(0x09)] private byte NameByte9;
+        [FieldOffset(0x10)] private byte NameByteA;
 
         [FieldOffset(0x0b)] public byte FieldType;
 
-        [FieldOffset(0x0c)] private UInt32 MemAddress;
+        [FieldOffset(0x0c)] public UInt32 Displacement;
 
         [FieldOffset(0x10)] public byte FieldLength;
         [FieldOffset(0x11)] public byte DecimalCount;
@@ -51,7 +52,7 @@ namespace LastDbf
         [FieldOffset(0x18)] private byte Reserved;
         [FieldOffset(0x18 + 8 - 1)] private byte LastByte;
 
-        public static int SizeOf => Marshal.SizeOf(typeof(DbfFieldStruct));
+        public static int SizeOf => Marshal.SizeOf(typeof(DbfFieldHeaderStruct));
 
         public string FieldName
         {
@@ -69,6 +70,7 @@ namespace LastDbf
                     NameByte7,
                     NameByte8,
                     NameByte9,
+                    NameByteA,
                     0 // C-lang end of string mark
                 };
 
@@ -79,7 +81,7 @@ namespace LastDbf
             {
                 var i = 0;
                 foreach (var c in value.ToCharArray()) SetByte(i++, (byte)c);
-                if (i < 10) SetByte(i, 0);
+                if (i < 11) SetByte(i, 0);
             }
         }
 

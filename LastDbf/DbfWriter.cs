@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace LastDbf
@@ -21,13 +22,11 @@ namespace LastDbf
             Version = version;
             _writeStream = File.Open(path, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
             Fields = new ReadOnlyCollection<DbfField>(_fields);
-            //_mode = Mode.OpenWrite;
         }
 
         public void AddField(DbfField field)
         {
-            //EnsureModeIsCorrect(Mode.OpenWrite);
-
+            field.Displacement = _fields.Sum(x => x.Size);
             _fields.Add(field);
         }
 
@@ -38,7 +37,7 @@ namespace LastDbf
             if (!_writingMode) StartWriting();
 
 
-            _writeStream.Position = DbfHeaderStruct.SizeOf + DbfFieldStruct.SizeOf * _fields.Count + 1;
+            _writeStream.Position = DbfHeaderStruct.SizeOf + DbfFieldHeaderStruct.SizeOf * _fields.Count + 1;
 
             var i = 0;
             foreach (var value in values)
@@ -47,6 +46,7 @@ namespace LastDbf
                 foreach (var b in bytes) _writeStream.WriteByte(b);
             }
 
+            ++RecordCount;
         }
 
         private static IEnumerable<byte> GetBytes(DbfField field, object value)
@@ -62,7 +62,7 @@ namespace LastDbf
                     }
 
                 case DbfFieldType.Date:
-                    return Encoding.Default.GetBytes($"{value:YYMMdd}");
+                    return Encoding.Default.GetBytes($"{value:YYYYMMdd}");
 
                 case DbfFieldType.Float:
                     {
@@ -112,7 +112,7 @@ namespace LastDbf
         {
             if (!_writingMode)
             {
-                WriteHeader(0);
+                WriteHeader(RecordCount);
                 WriteFields();
             }
             else
@@ -130,14 +130,15 @@ namespace LastDbf
         //    Disposed
         //}
 
-        private void WriteHeader(int records)
+        private void WriteHeader(int recordCount)
         {
             var h = new DbfHeaderStruct
             {
                 Version = (byte)Version,
-                Records = (uint)records,
-                LastUpdateDate = DateTime.Today,
-                HeaderBytes = (byte)DbfHeaderStruct.SizeOf
+                RecordCount = (uint)recordCount,
+                HeaderBytes = (ushort)(DbfHeaderStruct.SizeOf + recordCount * DbfHeaderStruct.SizeOf),
+                RecordBytes = (ushort)_fields.Sum(x => x.Size),
+                LastUpdateDate = DateTime.Today
             };
 
             _writeStream.Position = 0;
@@ -151,12 +152,13 @@ namespace LastDbf
 
             foreach (var field in _fields)
             {
-                var f = new DbfFieldStruct
+                var f = new DbfFieldHeaderStruct
                 {
                     FieldName = field.Name,
                     FieldType = (byte)field.Type,
                     FieldLength = (byte)field.Length,
                     DecimalCount = (byte)field.Precision,
+                    Displacement = (uint)field.Displacement
                 };
 
                 _writeStream.Write(f);

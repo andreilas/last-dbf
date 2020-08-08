@@ -8,10 +8,12 @@ namespace LastDbf.Test
     [TestClass]
     public class ComplexUnitTest
     {
+        private const string Folder = @"C:\TEMP\DBF\";
+
         [TestMethod]
         public void TestHeader()
         {
-            var path = @"C:\TEMP\DB_HEADER.DBF";
+            var path = Folder + @"DB_HEADER.DBF";
 
             using var dbf = new DbfWriter(path, DbfVersion.dBASE_III);
 
@@ -20,9 +22,27 @@ namespace LastDbf.Test
         }
 
         [TestMethod]
+        public void TestReadSample()
+        {
+            var path = Folder + @"SAMPLE.dbf";
+
+            using var reader = new DbfReader(path);
+
+            Assert.AreEqual(4, (int)reader.Version);
+
+            Assert.AreEqual(5, reader.Fields.Count);
+
+            Assert.AreEqual(2,reader.RecordCount);
+            
+            var record = reader.Read();
+            //dbf.AddRecord("ANDREI");
+        }
+
+
+        [TestMethod]
         public void TestMethod1()
         {
-            var path = @"C:\TEMP\DB.DBF";
+            var path = Folder + @"DB.DBF";
             var version = DbfVersion.dBASE_IV_SQL_Table;
 
             var w0 = new object[] { true, DateTime.Today, "HELLO!!!", 20001000.34, 345.780 };
@@ -55,10 +75,16 @@ namespace LastDbf.Test
                 // Header
                 Assert.AreEqual(version, reader.Version);
                 Assert.AreEqual(fields.Count, reader.Fields.Count);
+
+                Assert.IsTrue(fields.Select(x => x.Name).Zip(reader.Fields.Select(x => x.Name)).All(x => x.First.Equals(x.Second)));
+                Assert.IsTrue(fields.Select(x => x.Type).Zip(reader.Fields.Select(x => x.Type)).All(x => x.First.Equals(x.Second)));
+                Assert.IsTrue(fields.Select(x => x.Length).Zip(reader.Fields.Select(x => x.Length)).All(x => x.First.Equals(x.Second)));
+                Assert.IsTrue(fields.Select(x => x.Precision).Zip(reader.Fields.Select(x => x.Precision)).All(x => x.First.Equals(x.Second)));
+
                 Assert.IsTrue(fields.Zip(reader.Fields).All(x => x.First.Equals(x.Second)));
 
                 // Records
-                Assert.AreEqual(2, reader.Records);
+                Assert.AreEqual(2, reader.RecordCount);
 
                 var r0 = reader.Read();
                 Assert.IsNotNull(r0);

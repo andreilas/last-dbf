@@ -6,7 +6,7 @@
         Date = (byte)'D',
         Float = (byte)'F',
         Numeric = (byte)'N',
-        Logical = (byte)'Y',
+        Logical = (byte)'L',
 
         Integer = (byte)'I',
 

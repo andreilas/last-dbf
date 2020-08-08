@@ -15,7 +15,7 @@ namespace LastDbf
         [FieldOffset(0x02)] private byte MM;
         [FieldOffset(0x03)] private byte DD;
 
-        [FieldOffset(0x04)] public UInt32 Records;
+        [FieldOffset(0x04)] public UInt32 RecordCount;
         [FieldOffset(0x08)] public UInt16 HeaderBytes;
         [FieldOffset(0x0a)] public UInt16 RecordBytes;
 
