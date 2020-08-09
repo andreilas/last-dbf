@@ -66,13 +66,14 @@ namespace LastDbf
                         return bytes;
                     }
 
+                case DbfFieldType.Numeric:
                 case DbfFieldType.Float:
                     {
                         var d = (decimal)Convert.ChangeType(value, typeof(decimal));
                         var s = d.ToString("F" + field.Precision, CultureInfo.InvariantCulture.NumberFormat);
+                        
                         if( s.Length > field.Length) throw  new InvalidCastException(field.Name);
-
-                        s = new string(' ', field.Length - s.Length);
+                        s = new string(' ', field.Length - s.Length) + s; // justify right
 
                         return ToBytes(s, field.Length);
                     }
@@ -84,12 +85,6 @@ namespace LastDbf
                     {
                         var v = (int)value;
                         return BitConverter.GetBytes(Helper.SwapEndianness(v));
-                    }
-
-                case DbfFieldType.Numeric:
-                    {
-                        var s = value.ToString().Replace(",", ".");
-                        return ToBytes(s, 10);
                     }
 
                 default:
