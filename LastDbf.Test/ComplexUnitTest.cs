@@ -70,7 +70,10 @@ namespace LastDbf.Test
                 var records2 = reader.Records()?.ToList();
                 Assert.IsNotNull(records2);
                 Assert.AreEqual(records.Count, records2.Count);
-                CollectionAssert.AreEqual(records, records2);
+
+                foreach (var (fr, sr) in records.Zip(records2))
+                    foreach (var (fv, sv) in fr.Zip(sr))
+                    Assert.AreEqual(fv, sv);
             }
         }
 
