@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -31,6 +32,8 @@ namespace LastDbf
             _fields.Add(field);
         }
 
+        private long _recordOffset;
+
         public void AddRecord(params object[] values)
         {
             if (values.Length != _fields.Count) throw new ArgumentException("Invalid number of items");
@@ -39,15 +42,28 @@ namespace LastDbf
 
             //_writeStream.Position = DbfHeaderStruct.SizeOf + DbfFieldHeaderStruct.SizeOf * _fields.Count + 1;
 
-            _writeStream.WriteValue(' '); // Not deleted mark
-            var bytes = _fields.Zip(values, PackValue).SelectMany(x => x).ToArray();
-            _writeStream.Write(bytes, 0, bytes.Length);
+            WriteRecord(values);
 
             ++RecordCount;
         }
 
-        private static IEnumerable<byte> PackValue(DbfField field, object value)
+        private void WriteRecord(object[] values)
         {
+            _recordOffset = _writeStream.Position;
+
+            Debug.WriteLine($"[ R {RecordCount} {_writeStream.Position:X4}");
+
+            _writeStream.WriteValue(' '); // Not deleted mark
+            var bytes = _fields.Zip(values, PackValue).SelectMany(x => x).ToArray();
+
+            _writeStream.Write(bytes, 0, bytes.Length);
+
+            Debug.WriteLine($"] R {RecordCount} {_writeStream.Position:X4}");
+        }
+
+        private IEnumerable<byte> PackValue(DbfField field, object value)
+        {
+            Debug.WriteLine($"* V {field.Name} {_recordOffset + field.Displacement:X4}");
             switch (field.Type)
             {
                 case DbfFieldType.Character:
@@ -71,8 +87,8 @@ namespace LastDbf
                     {
                         var d = (decimal)Convert.ChangeType(value, typeof(decimal));
                         var s = d.ToString("F" + field.Precision, CultureInfo.InvariantCulture.NumberFormat);
-                        
-                        if( s.Length > field.Length) throw  new InvalidCastException(field.Name);
+
+                        if (s.Length > field.Length) throw new InvalidCastException(field.Name);
                         s = new string(' ', field.Length - s.Length) + s; // justify right
 
                         return ToBytes(s, field.Length);
@@ -114,7 +130,11 @@ namespace LastDbf
             if (!_writingMode)
                 StartWriting(); // write header & fields. no data
 
+            Debug.WriteLine($"] R {_writeStream.Position:X4}");
+
             _writeStream.WriteByte(0x1A); // write eof
+
+            Debug.WriteLine($"# E {_writeStream.Position:X4}");
 
             if (_writingMode)
                 WriteHeader(); // write again to save record count etc.
@@ -140,13 +160,16 @@ namespace LastDbf
                 RecordCount = (uint)RecordCount,
                 HeaderBytes = (ushort)(Header.SizeOf + _fields.Count * FieldDescriptor.SizeOf + 1), // + 1 - end of header make (0x0D)
                 RecordBytes = (ushort)CurrentRecordSize(),
-                LastUpdateDate = DateTime.Today
+                LastUpdateDate = Date
             };
 
             _writeStream.Position = 0;
+            Debug.WriteLine($"[ H {_writeStream.Position:X4}");
 
             _writeStream.WriteValue(h);
             _writeStream.Flush();
+
+            Debug.WriteLine($"] H {_writeStream.Position:X4}");
         }
 
         private int CurrentRecordSize() => _fields.Sum(x => x.Size) + 1; // + 1 -  deleted mark
@@ -155,8 +178,11 @@ namespace LastDbf
         {
             _writeStream.Position = Header.SizeOf;
 
+            Debug.WriteLine($"[ F {_writeStream.Position:X4}");
+
             foreach (var field in _fields)
             {
+                Debug.WriteLine($"* F {field.Name} {_writeStream.Position:X4} {field.Displacement}");
                 var f = new FieldDescriptor
                 {
                     FieldName = field.Name,
@@ -170,7 +196,11 @@ namespace LastDbf
                 _writeStream.Flush();
             }
 
+            Debug.WriteLine($"] F {_writeStream.Position:X4}");
+
             _writeStream.WriteByte(0x0d); // The End of Fields mark
+
+            Debug.WriteLine($"[ R {_writeStream.Position:X4}");
         }
     }
 }

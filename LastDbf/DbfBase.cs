@@ -9,6 +9,8 @@ namespace LastDbf
         
         public int RecordCount { get; protected set; }
 
+        public DateTime Date { get; protected set; } = DateTime.Today;
+
         public abstract void Dispose();
     }
 }

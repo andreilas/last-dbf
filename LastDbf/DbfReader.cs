@@ -26,6 +26,7 @@ namespace LastDbf
             var header = (Header)_readStream.ReadValue(typeof(Header));
             Version = (DbfVersion)header.Version;
             RecordCount = (int)header.RecordCount;
+            Date = header.LastUpdateDate;
             _dataOffset = header.HeaderBytes;
             _recordSize = header.RecordBytes;
 
